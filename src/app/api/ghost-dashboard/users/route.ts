@@ -1,0 +1,106 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/auth';
+import dbConnect from '@/lib/db/mongodb';
+import User from '@/lib/db/models/User';
+
+// Simple in-memory rate limiting for admin operations
+const adminRateLimit = new Map<string, { count: number; resetTime: number }>();
+
+function checkAdminRateLimit(userId: string, limit: number = 10, windowMs: number = 60000): boolean {
+  const now = Date.now();
+  const userLimit = adminRateLimit.get(userId);
+  
+  if (!userLimit || now > userLimit.resetTime) {
+    adminRateLimit.set(userId, { count: 1, resetTime: now + windowMs });
+    return true;
+  }
+  
+  if (userLimit.count >= limit) {
+    return false;
+  }
+  
+  userLimit.count++;
+  return true;
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    await dbConnect();
+    
+    const session = await getServerSession(authOptions);
+    
+    // Check if user is authenticated and is admin
+    if (!session?.user?.id || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    // Rate limiting
+    if (!checkAdminRateLimit(session.user.id, 10, 60000)) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
+    
+    const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+    
+    return NextResponse.json({
+      users: users.map(user => ({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        articlesGenerated: user.articlesGenerated,
+        createdAt: user.createdAt,
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch users' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    await dbConnect();
+    
+    const session = await getServerSession(authOptions);
+    
+    // Check if user is authenticated and is admin
+    if (!session?.user?.id || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    // Rate limiting
+    if (!checkAdminRateLimit(session.user.id, 10, 60000)) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
+    
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('id');
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+    
+    // Prevent admin from deleting themselves
+    if (userId === session.user.id) {
+      return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
+    }
+    
+    const deletedUser = await User.findByIdAndDelete(userId);
+    
+    if (!deletedUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+    
+    return NextResponse.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete user' },
+      { status: 500 }
+    );
+  }
+} 

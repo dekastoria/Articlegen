@@ -1,0 +1,356 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
+import { 
+  FileText, 
+  Sparkles, 
+  Calendar, 
+  Clock, 
+  Eye, 
+  Edit, 
+  Trash2, 
+  Plus,
+  BarChart3,
+  TrendingUp,
+  Users,
+  Activity,
+  Shield,
+  AlertCircle
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+interface Article {
+  id: string;
+  title: string;
+  summary: string;
+  category: string;
+  tone: string;
+  wordCount: number;
+  readingTime: number;
+  status: string;
+  createdAt: string;
+  keywords: string[];
+}
+
+interface DashboardStats {
+  totalArticles: number;
+  publishedArticles: number;
+  draftArticles: number;
+  totalWords: number;
+  averageReadingTime: number;
+  mostUsedCategory: string;
+}
+
+export default function DashboardPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (session) {
+      fetchArticles();
+      fetchStats();
+    }
+  }, [session]);
+
+  const fetchArticles = async () => {
+    try {
+      const response = await fetch('/api/articles');
+      if (response.ok) {
+        const data = await response.json();
+        setArticles(data.articles);
+      }
+    } catch (error) {
+      console.error('Error fetching articles:', error);
+      toast.error('Failed to load articles');
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/dashboard/stats');
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteArticle = (articleId: string) => {
+    setDeleteId(articleId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/articles/${deleteId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        toast.success('Article deleted successfully');
+        setShowDeleteModal(false);
+        setDeleteId(null);
+        fetchArticles();
+        fetchStats();
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete article');
+      }
+    } catch (error) {
+      console.error('Error deleting article:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete article');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  if (status === 'loading' || loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    router.push('/auth/login');
+    return null;
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Delete Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-lg font-bold mb-2 flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Delete Article
+            </h2>
+            <p className="mb-4">Are you sure you want to delete this article? This action cannot be undone.</p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowDeleteModal(false)} disabled={deleting}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete} disabled={deleting}>
+                {deleting ? 'Deleting...' : 'Delete'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Welcome back, {session.user.name}! Here&apos;s an overview of your articles and activity.
+        </p>
+      </div>
+
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Articles</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalArticles || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              +{stats?.publishedArticles || 0} published
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Words Written</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalWords?.toLocaleString() || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Average {Math.round((stats?.totalWords || 0) / (stats?.totalArticles || 1))} per article
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Reading Time</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.averageReadingTime || 0} min</div>
+            <p className="text-xs text-muted-foreground">
+              Average per article
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Articles Generated</CardTitle>
+            <Sparkles className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalArticles ?? 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Total generated
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Platform Info */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Platform Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
+            <div>
+              <p className="font-medium text-lg">Free AI Article Generator</p>
+              <p className="text-sm text-muted-foreground">
+                Generate unlimited articles with AI assistance
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row">
+              <Button className="w-full sm:w-auto" onClick={() => router.push('/generate')}>
+                <Plus className="mr-2 h-4 w-4" />
+                Generate New Article
+              </Button>
+              <Button className="w-full sm:w-auto" variant="outline" onClick={() => router.push('/ai-ideas')}>
+                <Sparkles className="mr-2 h-4 w-4" />
+                AI Ideas
+              </Button>
+            </div>
+          </div>
+          {/* Security Info */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+              <div className="text-sm text-blue-800">
+                <p className="font-medium mb-1">Security & Rate Limiting</p>
+                <p>• Rate limit: 10 articles per minute per user</p>
+                <p>• All inputs are validated and sanitized</p>
+                <p>• Your data is protected and never shared</p>
+                <p>• Free platform - no subscription required</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Articles List */}
+      <section className="mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Your Articles
+            </CardTitle>
+            <CardDescription>
+              Manage and view all your generated articles
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* Articles List */}
+            {loading ? (
+              <div className="text-center py-8">Loading...</div>
+            ) : articles.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No articles found.</div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {articles.map((article) => (
+                  <div key={article.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                          <h3 className="font-medium text-lg break-words">{article.title}</h3>
+                          <Badge variant={article.status === 'published' ? 'default' : 'secondary'} className="w-fit sm:ml-2">
+                            {article.status}
+                          </Badge>
+                        </div>
+                        <p className="text-muted-foreground mb-3 break-words">{article.summary}</p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs sm:text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            {new Date(article.createdAt).toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            {article.readingTime} min read
+                          </span>
+                          <span>{article.wordCount} words</span>
+                          <span className="capitalize">{article.tone}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {article.keywords.slice(0, 3).map((keyword, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {keyword}
+                            </Badge>
+                          ))}
+                          {article.keywords.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{article.keywords.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-2 sm:mt-0 sm:ml-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push(`/articles/${article.id}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push(`/articles/${article.id}/edit`)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteArticle(article.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+    </div>
+  );
+}
