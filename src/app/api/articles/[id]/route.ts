@@ -21,7 +21,7 @@ function checkRateLimit(userId: string, limit: number = 10, windowMs: number = 6
   return true;
 }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     await dbConnect();
@@ -35,8 +35,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = await params;
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: _id } = await params;
   try {
     await dbConnect();
     const session = await getServerSession(authOptions);
@@ -47,7 +47,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (!checkRateLimit(session.user.id, 10, 60000)) {
       return NextResponse.json({ error: 'Rate limit exceeded. Please try again in 1 minute.' }, { status: 429 });
     }
-    const article = await Article.findById(id);
+    const article = await Article.findById(_id);
     if (!article) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 });
     }
@@ -76,7 +76,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     await dbConnect();
@@ -97,7 +97,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     await dbConnect();

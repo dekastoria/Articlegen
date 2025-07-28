@@ -33,7 +33,7 @@ function sanitizeInput(input: string): string {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
@@ -50,7 +50,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
     }
     
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { name, email } = body;
     

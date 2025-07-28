@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, Trash2, Plus, Shield, Users, FileText, LogOut } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Loader2, Search, Trash2, Plus, Shield, Users, FileText, LogOut, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface UserType {
@@ -47,6 +48,19 @@ export default function GhostDashboardPage() {
   const [articleSearch, setArticleSearch] = useState('');
   const [newAdmin, setNewAdmin] = useState({ name: '', email: '', password: '' });
   const [activeTab, setActiveTab] = useState('users');
+  
+  // Dialog states
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    type: 'user' | 'admin' | 'article';
+    id: string;
+    name: string;
+  }>({
+    isOpen: false,
+    type: 'user',
+    id: '',
+    name: ''
+  });
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -90,63 +104,68 @@ export default function GhostDashboardPage() {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
-
-    try {
-      const res = await fetch(`/api/ghost-dashboard/users?id=${userId}`, {
-        method: 'DELETE',
-      });
-
-      if (res.ok) {
-        setUsers(users.filter(user => user._id !== userId));
-        toast.success('User deleted successfully');
-      } else {
-        toast.error('Failed to delete user');
-      }
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      toast.error('Failed to delete user');
-    }
+  const openDeleteDialog = (type: 'user' | 'admin' | 'article', id: string, name: string) => {
+    setDeleteDialog({
+      isOpen: true,
+      type,
+      id,
+      name
+    });
   };
 
-  const handleDeleteAdmin = async (adminId: string) => {
-    if (!confirm('Are you sure you want to delete this admin?')) return;
-
-    try {
-      const res = await fetch(`/api/ghost-dashboard/admins?id=${adminId}`, {
-        method: 'DELETE',
-      });
-
-      if (res.ok) {
-        setAdmins(admins.filter(admin => admin._id !== adminId));
-        toast.success('Admin deleted successfully');
-      } else {
-        toast.error('Failed to delete admin');
-      }
-    } catch (error) {
-      console.error('Error deleting admin:', error);
-      toast.error('Failed to delete admin');
-    }
+  const closeDeleteDialog = () => {
+    setDeleteDialog({
+      isOpen: false,
+      type: 'user',
+      id: '',
+      name: ''
+    });
   };
 
-  const handleDeleteArticle = async (articleId: string) => {
-    if (!confirm('Are you sure you want to delete this article?')) return;
-
+  const handleDelete = async () => {
+    const { type, id } = deleteDialog;
+    
     try {
-      const res = await fetch(`/api/ghost-dashboard/articles?id=${articleId}`, {
+      let endpoint = '';
+      switch (type) {
+        case 'user':
+          endpoint = `/api/ghost-dashboard/users?id=${id}`;
+          break;
+        case 'admin':
+          endpoint = `/api/ghost-dashboard/admins?id=${id}`;
+          break;
+        case 'article':
+          endpoint = `/api/ghost-dashboard/articles?id=${id}`;
+          break;
+      }
+
+      const res = await fetch(endpoint, {
         method: 'DELETE',
       });
 
       if (res.ok) {
-        setArticles(articles.filter(article => article._id !== articleId));
-        toast.success('Article deleted successfully');
+        // Update state based on type
+        switch (type) {
+          case 'user':
+            setUsers(users.filter(user => user._id !== id));
+            break;
+          case 'admin':
+            setAdmins(admins.filter(admin => admin._id !== id));
+            break;
+          case 'article':
+            setArticles(articles.filter(article => article._id !== id));
+            break;
+        }
+        
+        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully`);
       } else {
-        toast.error('Failed to delete article');
+        toast.error(`Failed to delete ${type}`);
       }
     } catch (error) {
-      console.error('Error deleting article:', error);
-      toast.error('Failed to delete article');
+      console.error(`Error deleting ${type}:`, error);
+      toast.error(`Failed to delete ${type}`);
+    } finally {
+      closeDeleteDialog();
     }
   };
 
@@ -281,7 +300,7 @@ export default function GhostDashboardPage() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDeleteUser(user._id)}
+                        onClick={() => openDeleteDialog('user', user._id, user.name)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -353,7 +372,7 @@ export default function GhostDashboardPage() {
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleDeleteAdmin(admin._id)}
+                          onClick={() => openDeleteDialog('admin', admin._id, admin.name)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -404,7 +423,7 @@ export default function GhostDashboardPage() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDeleteArticle(article._id)}
+                        onClick={() => openDeleteDialog('article', article._id, article.title)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -416,6 +435,34 @@ export default function GhostDashboardPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialog.isOpen} onOpenChange={closeDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Confirm Deletion
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this {deleteDialog.type}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              <strong>{deleteDialog.name}</strong> will be permanently removed from the system.
+            </p>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={closeDeleteDialog}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete {deleteDialog.type.charAt(0).toUpperCase() + deleteDialog.type.slice(1)}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

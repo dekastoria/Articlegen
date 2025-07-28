@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth/auth';
 import dbConnect from '@/lib/db/mongodb';
 import User from '@/lib/db/models/User';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await dbConnect();
     

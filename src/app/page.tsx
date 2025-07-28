@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, FileText, Zap, Users, BarChart3, Shield, Clock, Globe } from 'lucide-react';
-
 export default function HomePage() {
   return (
     <div className="min-h-screen">
@@ -14,16 +13,13 @@ export default function HomePage() {
             <Sparkles className="mr-2 h-3 w-3" />
             AI-Powered Content Creation
           </Badge>
-          
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Generate Articles with AI
           </h1>
-          
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Create high-quality, SEO-optimized articles in seconds. 
             Perfect for bloggers, marketers, and content creators.
           </p>
-          
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth/register">
               <Button size="lg" className="text-lg px-8 py-6">
@@ -37,13 +33,11 @@ export default function HomePage() {
               </Button>
             </Link>
           </div>
-          
           <p className="text-sm text-muted-foreground mt-4">
             Completely free • No credit card required • Unlimited articles
           </p>
         </div>
       </section>
-
       {/* Features Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
@@ -56,7 +50,6 @@ export default function HomePage() {
               that rank well and engage your audience.
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="text-center">
               <CardHeader>
@@ -69,7 +62,6 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
             </Card>
-
             <Card className="text-center">
               <CardHeader>
                 <div className="mx-auto w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
@@ -81,7 +73,6 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
             </Card>
-
             <Card className="text-center">
               <CardHeader>
                 <div className="mx-auto w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
@@ -93,7 +84,6 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
             </Card>
-
             <Card className="text-center">
               <CardHeader>
                 <div className="mx-auto w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
@@ -105,7 +95,6 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
             </Card>
-
             <Card className="text-center">
               <CardHeader>
                 <div className="mx-auto w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
@@ -117,7 +106,6 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
             </Card>
-
             <Card className="text-center">
               <CardHeader>
                 <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
@@ -132,7 +120,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       {/* How It Works */}
       <section className="py-20 px-4 bg-muted/50">
         <div className="container mx-auto max-w-4xl">
@@ -144,7 +131,6 @@ export default function HomePage() {
               Get started in just 3 simple steps
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">
@@ -155,7 +141,6 @@ export default function HomePage() {
                 Enter your article topic and select from 20+ categories
               </p>
             </div>
-
             <div className="text-center">
               <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">
                 2
@@ -165,7 +150,6 @@ export default function HomePage() {
                 Set tone, word count, keywords, and additional instructions
               </p>
             </div>
-
             <div className="text-center">
               <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">
                 3
@@ -178,7 +162,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       {/* Why Free Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-4xl">
@@ -190,7 +173,6 @@ export default function HomePage() {
               We believe everyone should have access to AI-powered content creation
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Card className="text-center">
               <CardHeader>
@@ -203,7 +185,6 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
             </Card>
-
             <Card className="text-center">
               <CardHeader>
                 <div className="mx-auto w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
@@ -215,7 +196,6 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
             </Card>
-
             <Card className="text-center">
               <CardHeader>
                 <div className="mx-auto w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
@@ -227,7 +207,6 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
             </Card>
-
             <Card className="text-center">
               <CardHeader>
                 <div className="mx-auto w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
@@ -242,7 +221,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       {/* CTA Section */}
       <section className="py-20 px-4 bg-primary text-primary-foreground">
         <div className="container mx-auto max-w-4xl text-center">
@@ -263,7 +241,6 @@ export default function HomePage() {
           </p>
         </div>
       </section>
-
       {/* Footer */}
       <footer className="py-12 px-4 border-t">
         <div className="container mx-auto max-w-6xl">
@@ -277,7 +254,6 @@ export default function HomePage() {
                 Create high-quality, SEO-optimized articles with AI assistance.
               </p>
             </div>
-            
             <div>
               <h3 className="font-semibold mb-4">Product</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
@@ -286,7 +262,6 @@ export default function HomePage() {
                 <li><Link href="#" className="hover:text-foreground">API</Link></li>
               </ul>
             </div>
-            
             <div>
               <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
@@ -295,7 +270,6 @@ export default function HomePage() {
                 <li><Link href="#" className="hover:text-foreground">Contact</Link></li>
               </ul>
             </div>
-            
             <div>
               <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
@@ -305,7 +279,6 @@ export default function HomePage() {
               </ul>
             </div>
           </div>
-          
           <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
             <p>&copy; 2025 AI Article Generator. All rights reserved.</p>
           </div>

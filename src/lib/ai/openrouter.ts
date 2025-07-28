@@ -154,13 +154,18 @@ Make sure the content is:
       }
       content = cleanContent(content);
       // Try to parse as JSON
-      let parsed: any = null;
+      let parsed: Record<string, unknown> | null = null;
       try {
         parsed = JSON.parse(content);
       } catch {
         parsed = tryParseJsonString(content);
       }
-      if (parsed && parsed.title && parsed.content && parsed.summary) {
+      if (
+        parsed &&
+        typeof parsed.title === 'string' &&
+        typeof parsed.content === 'string' &&
+        typeof parsed.summary === 'string'
+      ) {
         return {
           title: parsed.title,
           content: parsed.content.replace(/\\n/g, '\n'),
@@ -242,13 +247,17 @@ Please return a JSON object with:
         throw new Error('No content received from AI');
       }
       content = cleanContent(content);
-      let parsed: any = null;
+      let parsed: Record<string, unknown> | null = null;
       try {
         parsed = JSON.parse(content);
       } catch {
         parsed = tryParseJsonString(content);
       }
-      if (parsed && parsed.seoTitle && parsed.seoDescription) {
+      if (
+        parsed &&
+        typeof parsed.seoTitle === 'string' &&
+        typeof parsed.seoDescription === 'string'
+      ) {
         return {
           seoTitle: parsed.seoTitle,
           seoDescription: parsed.seoDescription,

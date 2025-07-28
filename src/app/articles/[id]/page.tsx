@@ -4,11 +4,9 @@ import User from '@/lib/db/models/User';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import ArticleDetailClient from './ArticleDetailClient';
-
 interface ArticlePageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
-
 type ArticleDoc = {
   _id: string;
   title: string;
@@ -29,45 +27,36 @@ type ArticleDoc = {
   createdAt: string;
   updatedAt: string;
 };
-
 function extractContent(content: string): string {
   let raw = content;
-  let safety = 0;
-  // Recursive parse jika masih string JSON
-  while (safety < 5) {
-    safety++;
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed.content === 'string') {
-        raw = parsed.content;
-        continue;
-      }
-    } catch {}
-    break;
+  
+  // Coba parse JSON terlebih dahulu
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.content === 'string') {
+      raw = parsed.content;
+      console.log('Successfully extracted content from JSON');
+    }
+  } catch (error) {
+    console.log('Content is not JSON, trying to extract manually');
+    
+    // Coba ekstrak content manual dari format yang mirip JSON
+    const contentMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)"\s*,\s*"summary"/);
+    if (contentMatch && contentMatch[1]) {
+      raw = contentMatch[1];
+      console.log('Successfully extracted content manually');
+    }
   }
-  // Hapus wrapper JSON jika masih ada { ... } di awal/akhir
-  if (/^\{[\s\S]*\}$/.test(raw)) {
-    raw = raw.replace(/^\{[\s\S]*?"content"\s*:\s*"/, '').replace(/"[\s\S]*\}\s*$/, '');
-  }
+  
   // Normalisasi: pastikan antar paragraf ada double newline
-  let normalized = raw
+  const normalized = raw
     .replace(/\\n/g, '\n') // escape to real newline
-    .replace(/\r\n/g, '\n');
-  if (!/\n\n/.test(normalized)) {
-    normalized = normalized
-      .split('\n')
-      .map(line => {
-        if (/^\s*(#|\*|\-|\d+\.|>)/.test(line)) return line; // heading, list, blockquote
-        if (line.trim() === '') return '';
-        return line + '\n';
-      })
-      .join('\n');
-    normalized = normalized.replace(/\n{2,}/g, '\n\n');
-  }
-  normalized = normalized.replace(/^\{+|\}+$/g, '').trim();
-  return normalized;
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n'); // maksimal 2 newline berturut-turut
+    
+  console.log('Content length after extraction:', normalized.length);
+  return normalized.trim();
 }
-
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   const { id } = await params;
   await dbConnect();
@@ -79,7 +68,6 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
     description: a.seoDescription || a.summary,
   };
 }
-
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const { id } = await params;
   await dbConnect();

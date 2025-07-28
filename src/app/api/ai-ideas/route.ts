@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       }
     } catch {}
     return NextResponse.json({ titles, keywords });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 } 
