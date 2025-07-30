@@ -1,0 +1,38 @@
+# docker-compose.yml untuk AI Article Generator
+
+services:
+  # Service untuk Database MongoDB
+  db:
+    image: mongo:6
+    container_name: ai_article_generator_db
+    restart: always
+    environment:
+      # Mengambil kredensial dari Environment Dokploy
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS}
+    volumes:
+      # Volume untuk menyimpan data MongoDB secara permanen
+      - mongo_data:/data/db
+
+  # Service untuk Aplikasi Next.js
+  app:
+    build: . # Membangun dari Dockerfile di folder ini
+    container_name: ai_article_generator_app
+    restart: always
+    depends_on:
+      - db # Memastikan database berjalan sebelum aplikasi
+    ports:
+      - "3000:3000" # Membuka port 3000
+    environment:
+      # Mengambil semua konfigurasi & rahasia dari Environment Dokploy
+      MONGODB_URI: "mongodb://${MONGO_USER}:${MONGO_PASS}@db:27017/ai-article-generator?authSource=admin"
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      OPENROUTER_SITE_URL: ${NEXTAUTH_URL}
+      OPENROUTER_SITE_NAME: "AI Article Generator"
+
+# Deklarasi volume yang kita gunakan
+volumes:
+  mongo_data: {}
